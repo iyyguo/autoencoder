@@ -1,0 +1,127 @@
+import theano
+from theano import tensor as T
+import numpy as np
+from load import mnist
+from sklearn.metrics import *
+from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+#from matplotlib.pyplot import *
+import matplotlib.pyplot as plt
+#from foxhound.utils.vis import grayscale_grid_vis, unit_scale
+#from scipy.misc import imsave
+
+srng = RandomStreams()
+
+def floatX(X):
+    return np.asarray(X, dtype=theano.config.floatX)
+
+def init_weights(shape):
+    return theano.shared(floatX(np.random.randn(*shape) * 0.01))
+
+def rectify(X):
+    return T.maximum(X, 0.)
+
+def RMSprop(cost, params, lr=0.001, rho=0.9, epsilon=1e-6):
+    grads = T.grad(cost=cost, wrt=params)
+    updates = []
+    for p, g in zip(params, grads):
+        acc = theano.shared(p.get_value() * 0.)
+        acc_new = rho * acc + (1 - rho) * g ** 2
+        gradient_scaling = T.sqrt(acc_new + epsilon)
+        g = g / gradient_scaling
+        updates.append((acc, acc_new))
+        updates.append((p, p - lr * g))
+    return updates
+
+def dropout(X, p=0.):
+    if p > 0:
+        retain_prob = 1 - p
+        X *= srng.binomial(X.shape, p=retain_prob, dtype=theano.config.floatX)
+        X /= retain_prob
+    return X
+
+def sgd(cost, params, lr):
+    grads = T.grad(cost=cost, wrt=params)
+    updates = []
+    for p, g in zip(params, grads):
+        updates.append([p, p - g * lr])
+    return updates
+
+def stairactivation(theta, k=3, N=4, a=100):
+    tmp = 0
+    for j in range(1, N):
+        tmp = tmp + T.tanh(a*(theta - j/N))
+    return 0.5 + tmp/2/k
+
+def model(X, w_h1, w_h2, w_h3, w_o, p_drop_input, p_drop_hidden):
+    h1 = T.nnet.sigmoid(dropout(T.dot(X, w_h1), p_drop_input))
+    h2 = rectify(dropout(T.dot(h1, w_h2), p_drop_hidden))
+    h3 = rectify(dropout(T.dot(h2, w_h3), p_drop_hidden))
+    px = T.nnet.sigmoid(dropout(T.dot(h3, w_o), p_drop_hidden))
+    ##h3 = stairactivation(T.dot(h2, w_h3), 3, 4, 10)
+    return px
+
+trX_raw, teX_raw, trY_raw, teY_raw = mnist(onehot=False)
+trX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 0])
+trY = np.asarray([0 for t in trY_raw if t == 0])
+tempX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 7])[1:101]
+tempY = np.asarray([1 for t in trY_raw if t == 7])[1:101]
+trX = np.concatenate((trX,tempX))
+trY = np.concatenate((trY,tempY))
+teX = np.asarray([teX_raw[i] for i in range(teY_raw.shape[0]) if teY_raw[i] == 0])
+teY = np.asarray([0 for t in teY_raw if t == 0])
+tempX = np.asarray([teX_raw[i] for i in range(teY_raw.shape[0]) if teY_raw[i] == 7])[1:101]
+tempY = np.asarray([1 for t in teY_raw if t == 7])[1:101]
+teX = np.concatenate((teX,tempX))
+teY = np.concatenate((teY,tempY))
+
+X = T.fmatrix()
+lr = T.fscalar()
+
+
+w_h1 = init_weights((784, 200))
+w_h2 = init_weights((200, 30))
+w_h3 = init_weights((30, 200))
+w_o = init_weights((200, 784))
+
+p_x = model(X, w_h1, w_h2, w_h3, w_o, 0.3, 0.6)
+p_x_predict = model(X, w_h1, w_h2, w_h3, w_o, 0, 0)
+
+cost = T.mean(T.sum((p_x - X)**2, axis = 1))
+params = [w_h1, w_h2, w_h3, w_o]
+updates = RMSprop(cost, params, lr)
+
+train = theano.function(inputs=[X, lr], outputs=cost, updates=updates, allow_input_downcast=True)
+predict = theano.function(inputs=[X], outputs=p_x_predict, allow_input_downcast=True)
+
+err_old = np.mean((predict(teX) - teX)**2)
+
+l_r = 0.001
+for i in range(100):
+    for start, end in zip(range(0, len(trX), 128), range(128, len(trX), 128)):
+        cost = train(trX[start:end], l_r)
+    err = np.mean((predict(teX) - teX)**2)
+    print roc_auc_score(teY, np.mean((predict(teX) - teX)**2, axis = 1)),err, l_r, i
+    if err >= err_old:
+        l_r = l_r * 0.95
+        print 'dfdf'
+    elif err < err_old and l_r < 0.1:
+        l_r = l_r*1.002
+    else:
+        l_r = l_r
+    err_old = err
+
+
+
+
+
+fpr, tpr, _ = roc_curve(teY, np.mean((predict(teX) - teX)**2, axis = 1))
+plt.figure()
+plt.plot(fpr, tpr, label='ROC curve')
+plt.plot([0, 1], [0, 1], 'k--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC curve')
+plt.legend(loc="lower right")
+plt.show()
