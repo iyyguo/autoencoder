@@ -63,10 +63,10 @@ def model(X, w_h1, w_h2, w_h3, w_o, p_drop_input, p_drop_hidden):
 trX_raw, teX_raw, trY_raw, teY_raw = mnist(onehot=False)
 trX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 0])
 trY = np.asarray([0 for t in trY_raw if t == 0])
-tempX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 7])[1:101]
-tempY = np.asarray([1 for t in trY_raw if t == 7])[1:101]
-trX = np.concatenate((trX,tempX))
-trY = np.concatenate((trY,tempY))
+#tempX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 7])[1:101]
+#tempY = np.asarray([1 for t in trY_raw if t == 7])[1:101]
+#trX = np.concatenate((trX,tempX))
+#trY = np.concatenate((trY,tempY))
 teX = np.asarray([teX_raw[i] for i in range(teY_raw.shape[0]) if teY_raw[i] == 0])
 teY = np.asarray([0 for t in teY_raw if t == 0])
 tempX = np.asarray([teX_raw[i] for i in range(teY_raw.shape[0]) if teY_raw[i] == 7])[1:101]
@@ -95,20 +95,20 @@ predict = theano.function(inputs=[X], outputs=p_x_predict, allow_input_downcast=
 
 err_old = np.mean((predict(teX) - teX)**2)
 
-l_r = 0.001
-for i in range(100):
+l_r = 0.01
+for iter in range(100):
     for start, end in zip(range(0, len(trX), 128), range(128, len(trX), 128)):
         cost = train(trX[start:end], l_r)
     err = np.mean((predict(teX) - teX)**2)
-    print roc_auc_score(teY, np.mean((predict(teX) - teX)**2, axis = 1)),err, l_r, i
-    if err >= err_old:
-        l_r = l_r * 0.95
-        print 'dfdf'
-    elif err < err_old and l_r < 0.1:
-        l_r = l_r*1.002
-    else:
-        l_r = l_r
+    #if err >= err_old:
+    #    l_r = l_r * 0.95
+    #    print 'dfdf'
+    #elif err < err_old and l_r < 0.1:
+    #    l_r = l_r*1.002
+    #else:
+    #    l_r = l_r
     err_old = err
+    print roc_auc_score(teY, np.mean((predict(teX) - teX)**2, axis = 1)), err, iter
 
 
 

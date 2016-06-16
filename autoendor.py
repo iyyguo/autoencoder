@@ -3,7 +3,7 @@ from theano import tensor as T
 import numpy as np
 from load import mnist
 from sklearn.metrics import *
-#from matplotlib.pyplot import * 
+#from matplotlib.pyplot import *
 import matplotlib.pyplot as plt
 #from foxhound.utils.vis import grayscale_grid_vis, unit_scale
 #from scipy.misc import imsave
@@ -40,7 +40,7 @@ def model(X, w_h1, w_h2, w_h3, w_o):
     #h1 = T.nnet.sigmoid(T.dot(X, w_h1))
     #h2 = T.tanh(T.dot(h1, w_h2))
     #h3 = T.tanh(T.dot(h2, w_h3))
-    ##h3 = stairactivation(T.dot(h2, w_h3), 3, 4, 10) 
+    ##h3 = stairactivation(T.dot(h2, w_h3), 3, 4, 10)
     #px = T.nnet.sigmoid(T.dot(h3, w_o))
     return px
 
@@ -76,21 +76,21 @@ updates = sgd(cost, params, lr)
 train = theano.function(inputs=[X, lr], outputs=cost, updates=updates, allow_input_downcast=True)
 predict = theano.function(inputs=[X], outputs=p_x, allow_input_downcast=True)
 
-err_old = np.mean((predict(teX) - teX)**2) 
+err_old = np.mean((predict(teX) - teX)**2)
 
 l_r = 0.05
 for i in range(100):
     for start, end in zip(range(0, len(trX), 128), range(128, len(trX), 128)):
         cost = train(trX[start:end], l_r)
-    err = np.mean((predict(teX) - teX)**2)    
+    err = np.mean((predict(teX) - teX)**2)
     print roc_auc_score(teY, np.mean((predict(teX) - teX)**2, axis = 1)),err, l_r, i
-    if err >= err_old:
-        l_r = l_r * 0.95
-        print 'dfdf'
-    elif err < err_old and l_r < 0.1:
-        l_r = l_r*1.002
-    else:
-        l_r = l_r 
+    # if err >= err_old:
+    #     l_r = l_r * 0.95
+    #     print 'dfdf'
+    # elif err < err_old and l_r < 0.1:
+    #     l_r = l_r*1.002
+    # else:
+    #     l_r = l_r
     err_old = err
     #lr = lr*0.9
 
