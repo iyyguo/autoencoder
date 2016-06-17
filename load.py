@@ -11,6 +11,8 @@ def one_hot(x,n):
 	o_h[np.arange(len(x)),x] = 1
 	return o_h
 
+#def kddcup99()
+
 def mnist(ntrain=60000,ntest=10000,onehot=True):
 	data_dir = os.path.join(datasets_dir,'mnist/')
 	fd = open(os.path.join(data_dir,'train-images-idx3-ubyte'))
@@ -45,4 +47,19 @@ def mnist(ntrain=60000,ntest=10000,onehot=True):
 		trY = np.asarray(trY)
 		teY = np.asarray(teY)
 
-	return trX,teX,trY,teY
+	trX_raw = trX
+	trY_raw = trY
+	teX_raw = teX
+	teY_raw = teY
+	trX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 0])
+	trY = np.asarray([0 for t in trY_raw if t == 0])
+	tempX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 7])[1:101]
+	tempY = np.asarray([1 for t in trY_raw if t == 7])[1:101]
+	trX = np.concatenate((trX,tempX))
+	trY = np.concatenate((trY,tempY))
+	teX = np.asarray([teX_raw[i] for i in range(teY_raw.shape[0]) if teY_raw[i] == 0])
+	teY = np.asarray([0 for t in teY_raw if t == 0])
+	trX = np.concatenate((trX,teX))
+	trY = np.concatenate((trY,teY))
+
+	return trX,trY

@@ -34,19 +34,7 @@ def model(X, w_h1, w_h2, w_h3, w_o):
     px = T.nnet.sigmoid(T.dot(h3, w_o))
     return px
 
-trX_raw, teX_raw, trY_raw, teY_raw = mnist(onehot=False)
-trX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 0])
-trY = np.asarray([0 for t in trY_raw if t == 0])
-tempX = np.asarray([trX_raw[i] for i in range(trY_raw.shape[0]) if trY_raw[i] == 7])[1:101]
-tempY = np.asarray([1 for t in trY_raw if t == 7])[1:101]
-trX = np.concatenate((trX,tempX))
-trY = np.concatenate((trY,tempY))
-teX = np.asarray([teX_raw[i] for i in range(teY_raw.shape[0]) if teY_raw[i] == 0])
-teY = np.asarray([0 for t in teY_raw if t == 0])
-#tempX = np.asarray([teX_raw[i] for i in range(teY_raw.shape[0]) if teY_raw[i] == 7])[1:101]
-#tempY = np.asarray([1 for t in teY_raw if t == 7])[1:101]
-trX = np.concatenate((trX,teX))
-trY = np.concatenate((trY,teY))
+trX, trY = mnist(onehot=False)
 
 X = T.fmatrix()
 lr = T.fscalar()
