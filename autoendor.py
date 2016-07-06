@@ -4,7 +4,7 @@ import numpy as np
 from load import mnist
 from sklearn.metrics import *
 #from matplotlib.pyplot import *
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 #from foxhound.utils.vis import grayscale_grid_vis, unit_scale
 #from scipy.misc import imsave
 
@@ -64,14 +64,14 @@ updates = sgd(cost, params, lr)
 train = theano.function(inputs=[X, lr], outputs=cost, updates=updates, allow_input_downcast=True)
 predict = theano.function(inputs=[X], outputs=p_x, allow_input_downcast=True)
 
-err_old = np.mean((predict(teX) - teX)**2)
+err_old = np.mean((predict(trX) - trX)**2)
 
 l_r = 0.05
 for i in range(100):
     for start, end in zip(range(0, len(trX), 128), range(128, len(trX), 128)):
         cost = train(trX[start:end], l_r)
-    err = np.mean((predict(teX) - teX)**2)
-    print roc_auc_score(teY, np.mean((predict(teX) - teX)**2, axis = 1)),err, l_r, i
+    err = np.mean(np.sum((predict(trX) - trX)**2, axis = 1))
+    print roc_auc_score(trY, np.mean((predict(trX) - trX)**2, axis = 1)),err, l_r, i
     # if err >= err_old:
     #     l_r = l_r * 0.95
     #     print 'dfdf'
@@ -85,14 +85,14 @@ for i in range(100):
 
 
 
-fpr, tpr, _ = roc_curve(teY, np.mean((predict(teX) - teX)**2, axis = 1))
-plt.figure()
-plt.plot(fpr, tpr, label='ROC curve')
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver operating characteristic example')
-plt.legend(loc="lower right")
-plt.show()
+# fpr, tpr, _ = roc_curve(teY, np.mean((predict(teX) - teX)**2, axis = 1))
+# plt.figure()
+# plt.plot(fpr, tpr, label='ROC curve')
+# plt.plot([0, 1], [0, 1], 'k--')
+# plt.xlim([0.0, 1.0])
+# plt.ylim([0.0, 1.05])
+# plt.xlabel('False Positive Rate')
+# plt.ylabel('True Positive Rate')
+# plt.title('Receiver operating characteristic example')
+# plt.legend(loc="lower right")
+# plt.show()

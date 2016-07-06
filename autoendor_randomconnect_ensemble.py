@@ -3,124 +3,104 @@ from theano import tensor as T
 import numpy as np
 from load import mnist
 from sklearn.metrics import *
-#from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-#from matplotlib.pyplot import *
+from functions import *
+from load import outlier_dataset
+from math import floor
 import matplotlib.pyplot as plt
-#from foxhound.utils.vis import grayscale_grid_vis, unit_scale
-#from scipy.misc import imsave
 
-#srng = RandomStreams()
+def para_def(input_num, layer = 5, max_h_num = 200, discount_factor = 0.25, density = 50):
+    w = []
+    w.append(init_weights((input_num, max_h_num)))
+    m = []
+    m.append(init_masks((input_num, max_h_num), density))
+    n = [input_num]
+    n.append(max_h_num)
+    for i in range(1,layer/2):
+        n.append(np.int(n[-1]*discount_factor))
+        w.append(init_weights((n[i], n[i+1])))
+        m.append(init_masks((n[i], n[i+1]), density))
+    for i in range(layer/2, layer-2):
+        n.append(n[layer -1 -i-1])
+        w.append(init_weights((n[i], n[i+1])))
+        m.append(init_masks((n[i], n[i+1]), density))
+    w.append(init_weights((max_h_num, input_num)))
+    m.append(init_masks((max_h_num, input_num), density))
+    n.append(input_num)
+    print n
+    return (w,m)
 
-def floatX(X):
-    return np.asarray(X, dtype=theano.config.floatX)
+def para_redef(w, m, density):
+    for m_i in m:
+        m_i.set_value(generate_masks(m_i.get_value().shape, density))
+    for w_i in w:
+        w_i.set_value(generate_weights(w_i.get_value().shape))
+    return (w,m)
 
-def init_weights(shape):
-    weight = floatX(np.random.randn(*shape) * 0.01)
-    #print weight
-    return theano.shared(weight)
+def model(X, w, m, layer = 5):
+    h = []
+    h_p = []
+    h.append(T.nnet.sigmoid(T.dot(X, w[0]*m[0])))
+    h_p.append(T.nnet.sigmoid(T.dot(X, w[0])))
+    for i in range(1, layer/2):
+        h.append(rectify(T.dot(h[-1], w[i]*m[i])))
+        h_p.append(rectify(T.dot(h_p[-1], w[i])))
+    for i in range(layer/2, layer-2):
+        h.append(rectify(T.dot(h[-1], w[i]*m[i])))
+        h_p.append(rectify(T.dot(h_p[-1], w[i])))
+    h.append(T.nnet.sigmoid(T.dot(h[-1], w[layer-2]*m[layer-2])))
+    h_p.append(T.nnet.sigmoid(T.dot(h_p[-1], w[layer-2])))
+    return (h[-1],h_p[-1])
 
+#=========dataset=============
+#trX, trY = mnist(onehot=False)
+#trX, trY = outlier_dataset('cardio',0)
+#trX, trY = outlier_dataset('lympho',0) #small one
+#trX, trY = outlier_dataset('ecoli',0)
+#trX, trY = outlier_dataset('musk',1)
+#trX, trY = outlier_dataset('optdigits',1)
+#trX, trY = outlier_dataset('waveform',0)
+#trX, trY = outlier_dataset('yeast',0) #small one
+trX, trY = outlier_dataset('kddcup99',1)
+#=============================
 
-def init_masks(shape):
-    mask = np.zeros(shape)
-    row = np.random.randint(shape[0], size = shape[0]*shape[1]/50)
-    col = np.random.randint(shape[1], size = shape[0]*shape[1]/50)
-    mask[row, col] += 1
-    #print mask
-    return theano.shared(mask)
-
-def reinit_masks(shape):
-    mask = np.zeros(shape)
-    row = np.random.randint(shape[0], size = shape[0]*shape[1]/50)
-    col = np.random.randint(shape[1], size = shape[0]*shape[1]/50)
-    mask[row, col] += 1
-    return mask
-
-def rectify(X):
-    return T.maximum(X, 0.)
-
-def RMSprop(cost, params, lr=0.001, rho=0.9, epsilon=1e-6):
-    grads = T.grad(cost=cost, wrt=params)
-    updates = []
-    for p, g in zip(params, grads):
-        acc = theano.shared(p.get_value() * 0.)
-        acc_new = rho * acc + (1 - rho) * g ** 2
-        gradient_scaling = T.sqrt(acc_new + epsilon)
-        g = g / gradient_scaling
-        updates.append((acc, acc_new))
-        updates.append((p, p - lr * g))
-    return updates
-
-# def dropout(X, p=0.):
-#     if p > 0:
-#         retain_prob = 1 - p
-#         X *= srng.binomial(X.shape, p=retain_prob, dtype=theano.config.floatX)
-#         X /= retain_prob
-#     return X
-
-def sgd(cost, params, lr):
-    grads = T.grad(cost=cost, wrt=params)
-    updates = []
-    for p, g in zip(params, grads):
-        updates.append([p, p - g * lr])
-    return updates
-
-# def stairactivation(theta, k=3, N=4, a=100):
-#     tmp = 0
-#     for j in range(1, N):
-#         tmp = tmp + T.tanh(a*(theta - j/N))
-#     return 0.5 + tmp/2/k
-
-def model(X, w_h1, w_h2, w_h3, w_o, m_h1, m_h2, m_h3, m_o):
-    h1 = T.nnet.sigmoid(T.dot(X, m_h1*w_h1))
-    h2 = rectify(T.dot(h1, m_h2*w_h2))
-    h3 = rectify(T.dot(h2, m_h3*w_h3))
-    px = T.nnet.sigmoid(T.dot(h3, m_o*w_o))
-    ##h3 = stairactivation(T.dot(h2, w_h3), 3, 4, 10)
-    return px
-
-trX, trY = mnist(onehot=False)
-
-
-X = T.fmatrix()
-lr = T.fscalar()
-
-w_h1 = init_weights((784, 200))
-w_h2 = init_weights((200, 30))
-w_h3 = init_weights((30, 200))
-w_o = init_weights((200, 784))
-m_h1 = init_masks((784, 200))
-m_h2 = init_masks((200, 30))
-m_h3 = init_masks((30, 200))
-m_o = init_masks((200, 784))
-
-p_x = model(X, w_h1, w_h2, w_h3, w_o, m_h1, m_h2, m_h3, m_o)
-p_x_predict = model(X, w_h1, w_h2, w_h3, w_o, m_h1, m_h2, m_h3, m_o)
-
-cost = T.mean(T.sum((p_x - X)**2, axis = 1))
-params = [w_h1, w_h2, w_h3, w_o]
-updates = RMSprop(cost, params, lr)
-
-train = theano.function(inputs=[X, lr], outputs=cost, updates=updates, allow_input_downcast=True)
-predict = theano.function(inputs=[X], outputs=p_x_predict, allow_input_downcast=True)
-
-err_old = np.mean((predict(trX) - trX)**2, axis = 1)
-
-
+#=========parameters==========
+layer = 5
+max_h_num = 50
+discount_factor = 0.25
+density = 10
+learning_rate = 0.02
+n_iter = 300
 n_ensemble = 100
 n_avg = 1
+#=============================
+
+#====symbolic definition======
+X = T.fmatrix()
+lr = T.fscalar()
+w, m = para_def(trX.shape[1], layer, max_h_num, discount_factor, density)
+p_x, p_x_predict = model(X, w, m, layer)
+cost = T.mean(T.sum((p_x - X)**2, axis = 1))
+params = w
+updates = RMSprop(cost, params, lr)
+train = theano.function(inputs=[X, lr], outputs=cost, updates=updates, allow_input_downcast=True)
+predict = theano.function(inputs=[X], outputs=p_x_predict, allow_input_downcast=True)
+#=============================
+
 avg_auc = 0
+ensemble_auc = []
+err_old = np.sum((predict(trX) - trX)**2, axis = 1)
 for i in range(n_avg):
     avg_err = np.zeros(err_old.shape)
-    index = np.random.randint(0, len(trX),[100,])
-    for m in range(n_ensemble):
-        l_r = 0.02
-        for iter in range(10):
+    index = np.random.randint(0, len(trX),[trX.shape[0]/10,])
+    for j in range(n_ensemble):
+        l_r = learning_rate
+        for iter in range(n_iter):
             cost = train(trX[index], l_r)
-            err = np.mean((predict(trX) - trX)**2, axis = 1)
+            err = np.sum((predict(trX) - trX)**2, axis = 1)
             if np.mean(err) >= np.mean(err_old):
                 l_r = l_r * 0.95
                 #print 'decrese in learning Rate'
-            elif np.mean(err) < np.mean(err_old) and l_r < 0.1:
+            elif np.mean(err) < np.mean(err_old) and l_r < learning_rate*1.5:
                 l_r = l_r*1.002
             else:
                 l_r = l_r
@@ -128,29 +108,23 @@ for i in range(n_avg):
             print roc_auc_score(trY, err), np.mean(err), iter
         avg_err = avg_err + err/n_ensemble
         auc = roc_auc_score(trY, err)
-        print auc, np.mean(err), 'emsemble ', m
-        #print w_h1.get_value()
-        w_h1.set_value(floatX(np.random.randn(*(784, 200)) * 0.01))
-        #print w_h1.get_value()
-        w_h2.set_value(floatX(np.random.randn(*(200, 30)) * 0.01))
-        w_h3.set_value(floatX(np.random.randn(*(30, 200)) * 0.01))
-        w_o.set_value(floatX(np.random.randn(*(200, 784)) * 0.01))
-        m_h1.set_value(reinit_masks((784, 200)))
-        m_h2.set_value(reinit_masks((200, 30)))
-        m_h3.set_value(reinit_masks((30, 200)))
-        m_o.set_value(reinit_masks((200, 784)))
+        ensemble_auc.append(auc)
+        print auc, np.mean(err), 'emsemble ', j
+        #print m[0].get_value()
+        w, m = para_redef(w, m, density)
+        #print m[0].get_value()
         #print np.mean(err), np.mean((predict(trX) - trX)**2)
     avg_auc = avg_auc + roc_auc_score(trY, avg_err)/n_avg
 print avg_auc, 'avg_auc'
 
-# fpr, tpr, _ = roc_curve(trY, np.mean((predict(trX) - trX)**2, axis = 1))
-# plt.figure()
-# plt.plot(fpr, tpr, label='ROC curve')
-# plt.plot([0, 1], [0, 1], 'k--')
-# plt.xlim([0.0, 1.0])
-# plt.ylim([0.0, 1.05])
-# plt.xlabel('False Positive Rate')
-# plt.ylabel('True Positive Rate')
-# plt.title('ROC curve')
-# plt.legend(loc="lower right")
-# plt.show()
+
+plt.figure()
+plt.boxplot(ensemble_auc)
+plt.plot(1,avg_auc,'bo')
+#plt.xlim([0.0, 1.0])
+#plt.ylim([0, 1])
+#plt.xlabel('False Positive Rate')
+#plt.ylabel('True Positive Rate')
+#plt.title('Receiver operating characteristic example')
+#plt.legend(loc="lower right")
+plt.show()
