@@ -7,6 +7,8 @@ from functions import *
 from load import outlier_dataset
 from math import floor
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+import sys
 
 def para_def(input_num, layer = 5, max_h_num = 200, discount_factor = 0.25, density = 50):
     w = []
@@ -30,7 +32,7 @@ def para_def(input_num, layer = 5, max_h_num = 200, discount_factor = 0.25, dens
     return (w,m)
 
 def para_redef(w, m, density):
-    density = density + np.random.randint(20, size =1)[0] - 10
+    #density = density + np.random.randint(20, size =1)[0] - 10
     for m_i in m:
         m_i.set_value(generate_masks(m_i.get_value().shape, density))
     for w_i in w:
@@ -52,81 +54,79 @@ def model(X, w, m, layer = 5):
     h_p.append(T.nnet.sigmoid(T.dot(h_p[-1], w[layer-2])))
     return (h[-1],h_p[-1])
 
+#=========data-settings============
+dataname = str(sys.argv[1])
+datainit = int(sys.argv[2])
+pp = PdfPages(dataname +'.pdf')
+#=============================
+
 #=========dataset=============
-#=========mnist==========
-# trX, trY = mnist(onehot=False)
-# layer = 5
-# max_h_num = 200
-# discount_factor = 0.25
-# density = 40
-# learning_rate = 0.02
-# n_iter = 100
-# n_ensemble = 100
-# n_avg = 1
-#=============================
-
-#trX, trY = outlier_dataset('cardio',0)
-#trX, trY = outlier_dataset('lympho',0) #small one
-#trX, trY = outlier_dataset('ecoli',0)
-
-#=========musk==========
-# trX, trY = outlier_dataset('musk',1)
-# layer = 5
-# max_h_num = 200
-# discount_factor = 0.25
-# density = 40
-# learning_rate = 0.02
-# n_iter = 100
-# n_ensemble = 100
-# n_avg = 1
-#=============================
-
-#=========optdigits==========
-trX, trY = outlier_dataset('optdigits',1)
-layer = 5
-max_h_num = 200
-discount_factor = 0.25
-density = 30
-learning_rate = 0.02
-n_iter = 1000
-n_ensemble = 100
-n_avg = 1
-#=============================
-
-#=========waveform==========
-# trX, trY = outlier_dataset('waveform',1)
-# layer = 5
-# max_h_num = 50
-# discount_factor = 0.25
-# density = 10
-# learning_rate = 0.02
-# n_iter = 1000
-# n_ensemble = 100
-# n_avg = 1
-#=============================
-
-#=========yeast==========
-# trX, trY = outlier_dataset('yeast',0) #small one
-# layer = 5
-# max_h_num = 50
-# discount_factor = 0.25
-# density = 5
-# learning_rate = 0.01
-# n_iter = 300
-# n_ensemble = 100
-# n_avg = 1
-#=============================
-
-#=========kddcup99==========
-# trX, trY = outlier_dataset('kddcup99',1)
-# layer = 5
-# max_h_num = 50
-# discount_factor = 0.25
-# density = 10
-# learning_rate = 0.02
-# n_iter = 300
-# n_ensemble = 100
-# n_avg = 1
+if dataname == 'mnist':
+    trX, trY = mnist(onehot=False)
+    layer = 5
+    max_h_num = 200
+    discount_factor = 0.25
+    density = 40
+    learning_rate = 0.02
+    n_iter = 100
+    n_ensemble = 100
+    n_avg = 1
+elif dataname == 'cardio':
+    trX, trY = outlier_dataset('cardio',datainit)
+elif dataname == 'lympho':
+    trX, trY = outlier_dataset('lympho',datainit) #small one
+elif dataname == 'ecoli':
+    trX, trY = outlier_dataset('ecoli',datainit)
+elif dataname == 'musk':
+    trX, trY = outlier_dataset('musk',1)
+    layer = 5
+    max_h_num = 200
+    discount_factor = 0.25
+    density = 40
+    learning_rate = 0.02
+    n_iter = 100
+    n_ensemble = 100
+    n_avg = 1
+elif dataname == 'optdigits':
+    trX, trY = outlier_dataset('optdigits',1)
+    layer = 5
+    max_h_num = 200
+    discount_factor = 0.25
+    density = 30
+    learning_rate = 0.02
+    n_iter = 1000
+    n_ensemble = 100
+    n_avg = 1
+elif dataname == 'waveform':
+    trX, trY = outlier_dataset('waveform',1)
+    layer = 5
+    max_h_num = 50
+    discount_factor = 0.25
+    density = 10
+    learning_rate = 0.02
+    n_iter = 1000
+    n_ensemble = 100
+    n_avg = 1
+elif dataname == 'yeast':
+    trX, trY = outlier_dataset('yeast',0) #small one
+    layer = 5
+    max_h_num = 50
+    discount_factor = 0.25
+    density = 5
+    learning_rate = 0.01
+    n_iter = 300
+    n_ensemble = 100
+    n_avg = 1
+elif dataname == 'kddcup99':
+    trX, trY = outlier_dataset('kddcup99',1)
+    layer = 5
+    max_h_num = 50
+    discount_factor = 0.25
+    density = 10
+    learning_rate = 0.02
+    n_iter = 300
+    n_ensemble = 100
+    n_avg = 1
 #=============================
 
 #====symbolic definition======
@@ -183,4 +183,5 @@ plt.plot(1,avg_auc,'bo')
 #plt.title('Receiver operating characteristic example')
 #plt.legend(loc="lower right")
 plt.show()
-# plt.savefig('yeast.png')
+plt.savefig(pp, format='pdf')
+pp.close()
