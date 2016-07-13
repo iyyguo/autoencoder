@@ -218,6 +218,11 @@ for i in range(n_avg):
     avg_auc = avg_auc + roc_auc_score(trY, avg_err)/n_avg
 print avg_auc, 'avg_auc'
 
+with open(dataname+'.csv', "w") as output:
+    writer = csv.writer(output, lineterminator='\n')
+    for val in ensemble_auc:
+        writer.writerow([val])
+    writer.writerow([avg_auc])
 
 plt.figure()
 plt.boxplot(ensemble_auc)
@@ -229,11 +234,5 @@ plt.plot(1,avg_auc,'bo')
 #plt.title('Receiver operating characteristic example')
 #plt.legend(loc="lower right")
 plt.savefig(pp, format='pdf')
-plt.show()
+#plt.show()
 pp.close()
-
-with open(dataname+'.csv', "w") as output:
-    writer = csv.writer(output, lineterminator='\n')
-    for val in ensemble_auc:
-        writer.writerow([val])
-    writer.writerow([avg_auc])
