@@ -46,114 +46,48 @@ datainit = int(sys.argv[2])
 #=========dataset=============
 if dataname == 'mnist':
     trX, trY = mnist(onehot=False)
-    layer = 5
-    max_h_num = 200
-    discount_factor = 0.25
-    density = 40
     learning_rate = 0.02
-    n_iter = 100
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'cardio':
     trX, trY = outlier_dataset('cardio',datainit)
-    layer = 5
-    max_h_num = 200
-    discount_factor = 0.25
-    density = 40
     learning_rate = 0.02
-    n_iter = 100
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'lympho':
     trX, trY = outlier_dataset('lympho',datainit) #small one
-    layer = 5
-    max_h_num = 200
-    discount_factor = 0.25
-    density = 40
     learning_rate = 0.02
-    n_iter = 100
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'ecoli':
     trX, trY = outlier_dataset('ecoli',datainit)
-    layer = 5
-    max_h_num = 200
-    discount_factor = 0.25
-    density = 40
     learning_rate = 0.02
-    n_iter = 100
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'musk':
     trX, trY = outlier_dataset('musk',datainit)
-    layer = 5
-    max_h_num = 200
-    discount_factor = 0.25
-    density = 40
     learning_rate = 0.02
-    n_iter = 100
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'optdigits':
     trX, trY = outlier_dataset('optdigits',datainit)
-    layer = 5
-    max_h_num = 200
-    discount_factor = 0.25
-    density = 30
     learning_rate = 0.02
-    n_iter = 1000
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'waveform':
     trX, trY = outlier_dataset('waveform',datainit)
-    layer = 5
-    max_h_num = 50
-    discount_factor = 0.25
-    density = 10
     learning_rate = 0.02
-    n_iter = 1000
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'yeast':
     trX, trY = outlier_dataset('yeast',datainit) #small one
-    layer = 5
-    max_h_num = 50
-    discount_factor = 0.25
-    density = 5
     learning_rate = 0.01
-    n_iter = 300
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'kddcup99':
     trX, trY = outlier_dataset('kddcup99',datainit)
-    layer = 5
-    max_h_num = 50
-    discount_factor = 0.25
-    density = 1
     learning_rate = 0.02
-    n_iter = 1000
-    n_ensemble = 100
-    n_avg = 1
 elif dataname == 'gisette':
     trX, trY = outlier_dataset('gisette',datainit)
-    layer = 5
-    max_h_num = 500
-    discount_factor = 0.25
-    density = 50
     learning_rate = 0.05
-    n_iter = 100
-    n_ensemble = 100
-    n_avg = 1
 #=============================
 
 #===gerneric setting====
-n_iter = trX.shape[0]/10
+n_training = trX.shape[0]/10
+n_iter = 300
 density = 1
 n_ensemble = 100
 n_avg = 1
-n_iter = 300
+max_h_num = max(np.int(trX.shape[1]**0.75),3)
+discount_factor = 0.25
+layer = 5
 l_r = learning_rate
 #=======================
+
 
 
 

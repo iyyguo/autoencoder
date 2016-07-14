@@ -23,22 +23,22 @@ def para_def(input_num, layer = 5, max_h_num = 200, discount_factor = 0.25, dens
         n.append(max(np.int(n[-1]*discount_factor), 3))
         w.append(init_weights((n[i], n[i+1])))
         m.append(init_masks((n[i], n[i+1]), density))
-    for i in range(layer/2, layer-2):
-        n.append(n[layer -1 -i-1])
-        w.append(init_weights((n[i], n[i+1])))
-        m.append(init_masks((n[i], n[i+1]), density))
-    w.append(init_weights((max_h_num, input_num)))
-    m.append(init_masks((max_h_num, input_num), density))
-    n.append(input_num)
+    #for i in range(layer/2, layer-2):
+        #n.append(n[layer -1 -i-1])
+        #w.append(init_weights((n[i], n[i+1])))
+        #m.append(init_masks((n[i], n[i+1]), density))
+    #w.append(init_weights((max_h_num, input_num)))
+    #m.append(init_masks((max_h_num, input_num), density))
+    #n.append(input_num)
     print n
     return (w,m)
 
 def para_redef(w, m, layer, density):
     #density = density + np.random.randint(20, size =1)[0] - 10
-    for m_i in m:
-        m_i.set_value(generate_masks(m_i.get_value().shape, density))
-    for w_i in w:
-        w_i.set_value(generate_weights(w_i.get_value().shape))
+    for i in range(layer/2):
+        m[i].set_value(generate_masks(m[i].get_value().shape, density))
+    for i in range(layer/2):
+        w[i].set_value(generate_weights(w[i].get_value().shape))
     return (w,m)
 
 def model(X, w, m, layer = 5):
@@ -50,10 +50,10 @@ def model(X, w, m, layer = 5):
         h.append(rectify(T.dot(h[-1], w[i]*m[i])))
         h_p.append(rectify(T.dot(h_p[-1], w[i])))
     for i in range(layer/2, layer-2):
-        h.append(rectify(T.dot(h[-1], w[i]*m[i])))
-        h_p.append(rectify(T.dot(h_p[-1], w[i])))
-    h.append(T.nnet.sigmoid(T.dot(h[-1], w[layer -2]*m[layer-2])))
-    h_p.append(T.nnet.sigmoid(T.dot(h_p[-1], w[layer -2])))
+        h.append(rectify(T.dot(h[-1], w[layer -1 -i-1].transpose()*m[layer -1 -i-1].transpose())))
+        h_p.append(rectify(T.dot(h_p[-1], w[layer -1 -i-1].transpose())))
+    h.append(T.nnet.sigmoid(T.dot(h[-1], w[0].transpose()*m[0].transpose())))
+    h_p.append(T.nnet.sigmoid(T.dot(h_p[-1], w[0].transpose())))
     return (h[-1],h_p[-1])
 
 #=========data-settings============
