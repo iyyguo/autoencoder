@@ -166,7 +166,7 @@ elif dataname == 'gisette':
 #=============================
 
 #===gerneric setting====
-n_iter = trX.shape[0]/10
+n_iter = max(trX.shape[0]/10, 1000)
 density = 1
 n_ensemble = 100
 n_avg = 1
