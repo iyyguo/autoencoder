@@ -166,7 +166,7 @@ elif dataname == 'gisette':
 #=============================
 
 #===gerneric setting====
-n_iter = max(trX.shape[0]/10, 1000)
+n_iter = min(trX.shape[0]/10, 2000)
 density = 1
 n_ensemble = 100
 n_avg = 1
@@ -194,7 +194,7 @@ for i in range(n_avg):
     for j in range(n_ensemble):
         l_r = learning_rate
         for iter in range(n_iter):
-            ada_size = max(np.int(sqrt(len(index))), iter)
+            ada_size = max(np.int(sqrt(len(index))*sqrt(sqrt(len(index)))), iter)
             train_index = np.random.randint(0, len(index),[ada_size,])
             cost = train(trX[index[train_index]], l_r)
             err = np.sum((predict(trX) - trX)**2, axis = 1)
