@@ -93,6 +93,21 @@ elif dataname == 'kddcup99':
 elif dataname == 'gisette':
     trX, trY = outlier_dataset('gisette',datainit)
     learning_rate = 0.05
+elif dataname == 'human_activity':
+    trX, trY = outlier_dataset('human_activity',datainit)
+    learning_rate = 0.02
+elif dataname == 'pendigits':
+    trX, trY = outlier_dataset('pendigits',datainit)
+    learning_rate = 0.02
+elif dataname == 'seismic':
+    trX, trY = outlier_dataset('seismic',datainit)
+    learning_rate = 0.02
+elif dataname == 'thyroid':
+    trX, trY = outlier_dataset('thyroid',datainit)
+    learning_rate = 0.02
+elif dataname == 'vowels':
+    trX, trY = outlier_dataset('vowels',datainit)
+    learning_rate = 0.02
 #=============================
 
 #===gerneric setting====

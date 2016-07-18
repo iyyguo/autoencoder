@@ -93,10 +93,26 @@ elif dataname == 'kddcup99':
 elif dataname == 'gisette':
     trX, trY = outlier_dataset('gisette',datainit)
     learning_rate = 0.05
+elif dataname == 'human_activity':
+    trX, trY = outlier_dataset('human_activity',datainit)
+    learning_rate = 0.02
+elif dataname == 'pendigits':
+    trX, trY = outlier_dataset('pendigits',datainit)
+    learning_rate = 0.02
+elif dataname == 'seismic':
+    trX, trY = outlier_dataset('seismic',datainit)
+    learning_rate = 0.02
+elif dataname == 'thyroid':
+    trX, trY = outlier_dataset('thyroid',datainit)
+    learning_rate = 0.02
+elif dataname == 'vowels':
+    trX, trY = outlier_dataset('vowels',datainit)
+    learning_rate = 0.02
+
 #=============================
 
 #===gerneric setting====
-n_training = trX.shape[0]/3
+n_training = trX.shape[0]/5
 n_iter = max(min(2*n_training, 2000),200)
 density = 1
 n_ensemble = 100
@@ -128,8 +144,8 @@ for i in range(n_avg):
     for j in range(n_ensemble):
         l_r = learning_rate
         for iter in range(n_iter):
-            if iter < np.int(len(index)**0.75):
-                ada_size = np.int(len(index)**0.75)
+            if iter < np.int(len(index)**0.5):
+                ada_size = np.int(len(index)**0.5)
             else:
                 ada_size = min(np.int(ada_size * 1.05), len(index))
             #ada_size = max(np.int(sqrt(len(index))*sqrt(sqrt(len(index)))), iter)
