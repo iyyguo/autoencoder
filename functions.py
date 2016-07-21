@@ -18,8 +18,10 @@ def init_masks(shape, density):
 
 def generate_masks(shape, density):
     mask = np.zeros(shape)
-    row = np.random.randint(shape[0], size = np.int(sqrt(shape[0]*shape[1])*sqrt(sqrt(shape[0]*shape[1]))*density))
-    col = np.random.randint(shape[1], size = np.int(sqrt(shape[0]*shape[1])*sqrt(sqrt(shape[0]*shape[1]))*density))
+    #connections = np.int(sqrt(shape[0]*shape[1])*sqrt(sqrt(shape[0]*shape[1]))*density)
+    connections = np.int(shape[0]*shape[1]*density)
+    row = np.random.randint(shape[0], size = connections)
+    col = np.random.randint(shape[1], size = connections)
     mask[row, col] += 1
     mask = np.double(np.greater(mask,0))
     #mask = np.ones(shape)
