@@ -149,6 +149,7 @@ pre_train = theano.function(inputs=[X, lr], outputs=cost_pre, updates=updates_pr
 #=============================
 
 avg_auc = 0
+ensemble_err = []
 ensemble_auc = []
 err_old = np.sum((predict(trX) - trX)**2, axis = 1)
 err_origin = np.mean(err_old)
@@ -181,9 +182,11 @@ for i in range(n_avg):
                 l_r = l_r
             err_old = err
             #print roc_auc_score(trY, err), np.mean(err), iter
-        auc = roc_auc_score(trY, err)
+        ensemble_err.append(err)
+        err_norm = err / np.std(err)
+        auc = roc_auc_score(trY, err_norm)
         ensemble_auc.append(auc)
-        avg_err = avg_err + err/n_ensemble
+        avg_err = avg_err + err_norm/n_ensemble
         print auc, np.mean(err), 'iter', iter , 'emsemble ', j
         #print roc_auc_score(trY, avg_err)
         #print m[0].get_value()
@@ -193,11 +196,18 @@ for i in range(n_avg):
     avg_auc = avg_auc + roc_auc_score(trY, avg_err)/n_avg
 print avg_auc, 'avg_auc'
 
+with open(dataname+'_err.csv', "w") as output:
+    writer = csv.writer(output, lineterminator='\n')
+    for val in ensemble_err:
+        writer.writerow([val])
+    #writer.writerow([avg_auc])
+    writer.writerow([trY])
 with open(dataname+'.csv', "w") as output:
     writer = csv.writer(output, lineterminator='\n')
     for val in ensemble_auc:
         writer.writerow([val])
     writer.writerow([avg_auc])
+
 
 base = np.genfromtxt(dataname+'_base.csv', delimiter=',')
 
