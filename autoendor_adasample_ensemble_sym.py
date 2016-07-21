@@ -56,6 +56,12 @@ def model(X, w, m, layer = 5):
     h_p.append(T.nnet.sigmoid(T.dot(h_p[-1], w[0].transpose())))
     return (h[-1],h_p[-1])
 
+
+def model_pretrain(X, w0, m0):
+    h0 = T.nnet.sigmoid(T.dot(X, w0*m0))
+    h1 = T.nnet.sigmoid(T.dot(h0, w0.transpose()*m0.transpose()))
+    return h1
+
 #=========data-settings============
 dataname = str(sys.argv[1])
 datainit = int(sys.argv[2])
@@ -112,10 +118,10 @@ elif dataname == 'vowels':
 #=============================
 
 #===gerneric setting====
-n_training = trX.shape[0]/1
-n_iter = max(min(2*n_training, 2000),200)
-density = 1
-n_ensemble = 100
+n_training = trX.shape[0]/3
+n_iter = np.int(max(min(4*n_training, 2000),200))
+density = 1.5
+n_ensemble = 1000
 n_avg = 1
 max_h_num = max(np.int(trX.shape[1]**0.75),3)
 discount_factor = 0.25
@@ -134,13 +140,23 @@ train = theano.function(inputs=[X, lr], outputs=cost, updates=updates, allow_inp
 predict = theano.function(inputs=[X], outputs=p_x_predict, allow_input_downcast=True)
 #=============================
 
+#=====pre-training============
+p_pretrain = model_pretrain(X, w[0], m[0])
+cost_pre = T.mean(T.sum((p_pretrain - X)**2, axis = 1))
+params_pre = [w[0]]
+updates_pre = RMSprop(cost_pre, params_pre, lr)
+pre_train = theano.function(inputs=[X, lr], outputs=cost_pre, updates=updates_pre, allow_input_downcast=True)
+#=============================
+
 avg_auc = 0
 ensemble_auc = []
 err_old = np.sum((predict(trX) - trX)**2, axis = 1)
+err_origin = np.mean(err_old)
+print err_origin
 for i in range(n_avg):
     avg_err = np.zeros(err_old.shape)
     index = np.random.choice(len(trX), n_training, replace=False)
-    print len(index)
+    #print len(index)
     for j in range(n_ensemble):
         l_r = learning_rate
         for iter in range(n_iter):
@@ -150,6 +166,10 @@ for i in range(n_avg):
                 ada_size = min(np.int(ada_size * 1.05), len(index))
             #ada_size = max(np.int(sqrt(len(index))*sqrt(sqrt(len(index)))), iter)
             train_index = np.random.choice(len(index),ada_size, replace = False)
+
+            for pre_iter in range(10):
+                cost_pre = pre_train(trX[index[train_index]], l_r)
+
             cost = train(trX[index[train_index]], l_r)
             err = np.sum((predict(trX) - trX)**2, axis = 1)
             if np.mean(err) >= np.mean(err_old):
@@ -160,11 +180,12 @@ for i in range(n_avg):
             else:
                 l_r = l_r
             err_old = err
-            print roc_auc_score(trY, err), np.mean(err), iter
-        avg_err = avg_err + err/n_ensemble
+            #print roc_auc_score(trY, err), np.mean(err), iter
         auc = roc_auc_score(trY, err)
         ensemble_auc.append(auc)
-        print auc, np.mean(err), 'emsemble ', j
+        avg_err = avg_err + err/n_ensemble
+        print auc, np.mean(err), 'iter', iter , 'emsemble ', j
+        #print roc_auc_score(trY, avg_err)
         #print m[0].get_value()
         w, m = para_redef(w, m, layer, density)
         #print m[0].get_value()
