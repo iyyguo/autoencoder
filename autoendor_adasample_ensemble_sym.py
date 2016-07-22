@@ -121,11 +121,11 @@ elif dataname == 'vowels':
 n_training = trX.shape[0]/3
 n_iter = np.int(max(min(4*n_training, 2000),200))
 density = 1.5
-n_ensemble = 1000
+n_ensemble = 100
 n_avg = 1
 max_h_num = max(np.int(trX.shape[1]**0.75),3)
-discount_factor = 0.25
-layer = 5
+discount_factor = 0.5
+layer = 7
 #=======================
 
 #====symbolic definition======
@@ -149,7 +149,7 @@ pre_train = theano.function(inputs=[X, lr], outputs=cost_pre, updates=updates_pr
 #=============================
 
 avg_auc = 0
-ensemble_err = []
+ensemble_err = np.zeros((n_ensemble, trX.shape[0]))
 ensemble_auc = []
 err_old = np.sum((predict(trX) - trX)**2, axis = 1)
 err_origin = np.mean(err_old)
@@ -182,7 +182,9 @@ for i in range(n_avg):
                 l_r = l_r
             err_old = err
             #print roc_auc_score(trY, err), np.mean(err), iter
-        ensemble_err.append(err)
+        #ensemble_err.append(err)
+        ensemble_err[j] = err
+        #print err.shape, ensemble_err.shape
         err_norm = err / np.std(err)
         auc = roc_auc_score(trY, err_norm)
         ensemble_auc.append(auc)
@@ -193,15 +195,16 @@ for i in range(n_avg):
         w, m = para_redef(w, m, layer, density)
         #print m[0].get_value()
         #print np.mean(err), np.mean((predict(trX) - trX)**2)
-    avg_auc = avg_auc + roc_auc_score(trY, avg_err)/n_avg
+    #avg_auc = avg_auc + roc_auc_score(trY, avg_err)/n_avg
+    avg_auc = avg_auc + roc_auc_score(trY, np.median(ensemble_err, axis = 0))/n_avg
 print avg_auc, 'avg_auc'
 
 with open(dataname+'_err.csv', "w") as output:
     writer = csv.writer(output, lineterminator='\n')
     for val in ensemble_err:
-        writer.writerow([val])
+        writer.writerow(val)
     #writer.writerow([avg_auc])
-    writer.writerow([trY])
+    writer.writerow(trY)
 with open(dataname+'.csv', "w") as output:
     writer = csv.writer(output, lineterminator='\n')
     for val in ensemble_auc:
@@ -213,8 +216,8 @@ base = np.genfromtxt(dataname+'_base.csv', delimiter=',')
 
 plt.figure()
 plt.boxplot(ensemble_auc)
-plt.plot(1,avg_auc,'bo')
 plt.plot(1,base,'rs')
+plt.plot(1,avg_auc,'bo')
 #plt.xlim([0.0, 1.0])
 #plt.ylim([0, 1])
 #plt.xlabel('False Positive Rate')
