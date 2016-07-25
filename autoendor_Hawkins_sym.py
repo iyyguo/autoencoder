@@ -93,7 +93,7 @@ elif dataname == 'vowels':
 
 #===gerneric setting====
 n_training = trX.shape[0]/10
-n_iter = 300
+n_iter = 200
 density = 1
 n_ensemble = 100
 n_avg = 1

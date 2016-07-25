@@ -42,25 +42,33 @@ def para_redef(w, m, layer, density):
     return (w,m)
 
 def model(X, w, m, layer = 5):
-    h = []
-    h_p = []
+    h = [X]
+    #h_p = []
     h.append(T.nnet.sigmoid(T.dot(X, w[0]*m[0])))
-    h_p.append(T.nnet.sigmoid(T.dot(X, w[0])))
+    #h_p.append(T.nnet.sigmoid(T.dot(X, w[0])))
     for i in range(1, layer/2):
         h.append(rectify(T.dot(h[-1], w[i]*m[i])))
-        h_p.append(rectify(T.dot(h_p[-1], w[i])))
+        #h_p.append(rectify(T.dot(h_p[-1], w[i])))
     for i in range(layer/2, layer-2):
         h.append(rectify(T.dot(h[-1], w[layer -1 -i-1].transpose()*m[layer -1 -i-1].transpose())))
-        h_p.append(rectify(T.dot(h_p[-1], w[layer -1 -i-1].transpose())))
+        #h_p.append(rectify(T.dot(h_p[-1], w[layer -1 -i-1].transpose())))
     h.append(T.nnet.sigmoid(T.dot(h[-1], w[0].transpose()*m[0].transpose())))
-    h_p.append(T.nnet.sigmoid(T.dot(h_p[-1], w[0].transpose())))
-    return (h[-1],h_p[-1])
+    #h_p.append(T.nnet.sigmoid(T.dot(h_p[-1], w[0].transpose())))
+    #return (h[-1],h_p[-1])
+    return h[-1]
 
 
-def model_pretrain(X, w0, m0):
-    h0 = T.nnet.sigmoid(T.dot(X, w0*m0))
-    h1 = T.nnet.sigmoid(T.dot(h0, w0.transpose()*m0.transpose()))
-    return h1
+def model_pretrain(X, w, m, layer = 5):
+    h = [X]
+    h.append(T.nnet.sigmoid(T.dot(X, w[0]*m[0])))
+    for i in range(1, layer/2):
+        h.append(rectify(T.dot(h[-1], w[i]*m[i])))
+    h_in = h[layer/2 - 1]
+    for i in range(layer/2, layer-2):
+        h.append(rectify(T.dot(h[-1], w[layer -1 -i-1].transpose()*m[layer -1 -i-1].transpose())))
+    h.append(T.nnet.sigmoid(T.dot(h[-1], w[0].transpose()*m[0].transpose())))
+    h_out = h[-(np.int(layer/2))]
+    return (h_in,h_out)
 
 #=========data-settings============
 dataname = str(sys.argv[1])
@@ -132,20 +140,29 @@ layer = 7
 X = T.fmatrix()
 lr = T.fscalar()
 w, m = para_def(trX.shape[1], layer, max_h_num, discount_factor, density)
-p_x, p_x_predict = model(X, w, m, layer)
+p_x  = model(X, w, m, layer)
 cost = T.mean(T.sum((p_x - X)**2, axis = 1))
 params = w
 updates = RMSprop(cost, params, lr)
 train = theano.function(inputs=[X, lr], outputs=cost, updates=updates, allow_input_downcast=True)
-predict = theano.function(inputs=[X], outputs=p_x_predict, allow_input_downcast=True)
+predict = theano.function(inputs=[X], outputs=p_x, allow_input_downcast=True)
 #=============================
 
 #=====pre-training============
-p_pretrain = model_pretrain(X, w[0], m[0])
-cost_pre = T.mean(T.sum((p_pretrain - X)**2, axis = 1))
-params_pre = [w[0]]
-updates_pre = RMSprop(cost_pre, params_pre, lr)
-pre_train = theano.function(inputs=[X, lr], outputs=cost_pre, updates=updates_pre, allow_input_downcast=True)
+# p_pretrain = model(X, w, m, 3)#model_pretrain(X, w[0], m[0])
+# cost_pre = T.mean(T.sum((p_pretrain - X)**2, axis = 1))
+# params_pre = [w[0]]
+# updates_pre = RMSprop(cost_pre, params_pre, lr)
+# pre_train = theano.function(inputs=[X, lr], outputs=cost_pre, updates=updates_pre, allow_input_downcast=True)
+
+pre_train_functions = []
+for i in range(0, layer/2):
+    p_in, p_out = model_pretrain(X, w, m, 3 + 2*i)
+    cost_pre = T.mean(T.sum((p_out - p_in)**2, axis = 1))
+    params_pre = [w[i]]
+    updates_pre = RMSprop(cost_pre, params_pre, lr)
+    pre_train = theano.function(inputs=[X, lr], outputs=cost_pre, updates=updates_pre, allow_input_downcast=True)
+    pre_train_functions.append(pre_train)
 #=============================
 
 avg_auc = 0
@@ -160,6 +177,12 @@ for i in range(n_avg):
     #print len(index)
     for j in range(n_ensemble):
         l_r = learning_rate
+
+        pretrain_index = np.random.choice(len(index), np.int(len(index)/3), replace = False)
+        for fn in pre_train_functions:
+            for pre_iter in range(100):
+                cost_pre = fn(trX[index[pretrain_index]], l_r)
+
         for iter in range(n_iter):
             if iter < np.int(len(index)**0.5):
                 ada_size = np.int(len(index)**0.5)
@@ -168,10 +191,10 @@ for i in range(n_avg):
             #ada_size = max(np.int(sqrt(len(index))*sqrt(sqrt(len(index)))), iter)
             train_index = np.random.choice(len(index),ada_size, replace = False)
 
-            for pre_iter in range(10):
-                cost_pre = pre_train(trX[index[train_index]], l_r)
-
             cost = train(trX[index[train_index]], l_r)
+            # for fn in pre_train_functions:
+            #     cost = fn(trX[index[train_index]], l_r)
+
             err = np.sum((predict(trX) - trX)**2, axis = 1)
             if np.mean(err) >= np.mean(err_old):
                 l_r = l_r * 0.95
