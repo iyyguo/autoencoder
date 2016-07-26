@@ -127,7 +127,7 @@ elif dataname == 'vowels':
 
 #===gerneric setting====
 n_training = trX.shape[0]/3
-n_iter = np.int(max(min(4*n_training, 2000),200))
+n_iter = np.int(max(min(4*n_training, 1200),200))
 density = 1.5
 n_ensemble = 100
 n_avg = 1
