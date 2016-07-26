@@ -134,6 +134,8 @@ n_avg = 1
 max_h_num = max(np.int(trX.shape[1]**0.75),3)
 discount_factor = 0.5
 layer = 7
+if trX.shape[1] <= 20:
+    layer = 5
 #=======================
 
 #====symbolic definition======
