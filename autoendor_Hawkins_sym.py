@@ -4,7 +4,7 @@ import numpy as np
 from load import mnist
 from sklearn.metrics import *
 from functions import *
-from load import outlier_dataset
+from load import outlier_dataset, outlier_med
 from math import floor
 #import matplotlib.pyplot as plt
 import sys
@@ -88,6 +88,15 @@ elif dataname == 'thyroid':
     learning_rate = 0.02
 elif dataname == 'vowels':
     trX, trY = outlier_dataset('vowels',datainit)
+    learning_rate = 0.02
+elif dataname == 'med_small2':
+    trX, trY = outlier_med('med_small',datainit,2)
+    learning_rate = 0.02
+elif dataname == 'med_small3':
+    trX, trY = outlier_med('med_small',datainit,3)
+    learning_rate = 0.02
+elif dataname == 'med_small4':
+    trX, trY = outlier_med('med_small',datainit,4)
     learning_rate = 0.02
 #=============================
 
