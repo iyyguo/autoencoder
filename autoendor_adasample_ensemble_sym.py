@@ -4,7 +4,7 @@ import numpy as np
 from load import mnist
 from sklearn.metrics import *
 from functions import *
-from load import outlier_dataset
+from load import outlier_dataset, outlier_med
 from math import *
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -88,7 +88,7 @@ elif dataname == 'lympho':
     learning_rate = 0.02
 elif dataname == 'ecoli':
     trX, trY = outlier_dataset('ecoli',datainit)
-    learning_rate = 0.02
+    learning_rate = 0.05
 elif dataname == 'musk':
     trX, trY = outlier_dataset('musk',datainit)
     learning_rate = 0.02
@@ -122,13 +122,22 @@ elif dataname == 'thyroid':
 elif dataname == 'vowels':
     trX, trY = outlier_dataset('vowels',datainit)
     learning_rate = 0.02
+elif dataname == 'med_small2':
+    trX, trY = outlier_med('med_small',datainit,2)
+    learning_rate = 0.02
+elif dataname == 'med_small3':
+    trX, trY = outlier_med('med_small',datainit,3)
+    learning_rate = 0.02
+elif dataname == 'med_small4':
+    trX, trY = outlier_med('med_small',datainit,4)
+    learning_rate = 0.02
 
 #=============================
 
 #===gerneric setting====
-n_training = trX.shape[0]/3
+n_training = trX.shape[0]/5
 n_iter = np.int(max(min(4*n_training, 1200),200))
-density = 1.5
+density = 1
 n_ensemble = 100
 n_avg = 1
 max_h_num = max(np.int(trX.shape[1]**0.75),3)

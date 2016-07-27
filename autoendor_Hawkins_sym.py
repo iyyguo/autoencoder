@@ -49,13 +49,13 @@ if dataname == 'mnist':
     learning_rate = 0.02
 elif dataname == 'cardio':
     trX, trY = outlier_dataset('cardio',datainit)
-    learning_rate = 0.02
+    learning_rate = 0.2
 elif dataname == 'lympho':
     trX, trY = outlier_dataset('lympho',datainit) #small one
     learning_rate = 0.02
 elif dataname == 'ecoli':
     trX, trY = outlier_dataset('ecoli',datainit)
-    learning_rate = 0.02
+    learning_rate = 1.8
 elif dataname == 'musk':
     trX, trY = outlier_dataset('musk',datainit)
     learning_rate = 0.02

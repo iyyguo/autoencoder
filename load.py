@@ -22,6 +22,22 @@ def outlier_dataset(name = 'kddcup99', normalize = 1):
 		trX = trX / (trX.max(axis=0)+0.00001)
 	return trX, trY
 
+def outlier_med(name = 'med', normalize = 1, hour = 2):
+	loaded = np.genfromtxt('datasets/'+'outlier_'+name+'.csv', delimiter=' ')
+	n = loaded.shape[0]
+	d = loaded.shape[1]
+	trX = loaded[:,0:d-3]
+	if hour == 2:
+		trY = loaded[:,d-3]
+	elif hour == 3:
+		trY = loaded[:,d-2]
+	elif hour == 4:
+		trY = loaded[:,d-1]
+
+	if normalize == 1:
+		trX = trX / (trX.max(axis=0)+0.00001)
+	return trX, trY
+
 def mnist(ntrain=60000,ntest=10000,onehot=True):
 	data_dir = os.path.join('datasets/mnist/')
 	fd = open(os.path.join(data_dir,'train-images-idx3-ubyte'))
