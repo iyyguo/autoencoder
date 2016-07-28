@@ -76,6 +76,17 @@ datainit = int(sys.argv[2])
 pp = PdfPages(dataname +'.pdf')
 #=============================
 
+#===gerneric setting====
+density = 1
+n_ensemble = 500
+n_avg = 1
+discount_factor = 0.7
+layer = 7
+training_split = 10
+# if trX.shape[1] <= 20:
+#     layer = 5
+#=======================
+
 #=========dataset=============
 if dataname == 'mnist':
     trX, trY = mnist(onehot=False)
@@ -124,28 +135,21 @@ elif dataname == 'vowels':
     learning_rate = 0.02
 elif dataname == 'med_small2':
     trX, trY = outlier_med('med_small',datainit,2)
-    learning_rate = 0.02
+    learning_rate = 0.05
+    #layer = 3
 elif dataname == 'med_small3':
     trX, trY = outlier_med('med_small',datainit,3)
-    learning_rate = 0.02
+    learning_rate = 0.05
 elif dataname == 'med_small4':
     trX, trY = outlier_med('med_small',datainit,4)
-    learning_rate = 0.02
-
+    learning_rate = 0.05
 #=============================
 
-#===gerneric setting====
-n_training = trX.shape[0]/5
-n_iter = np.int(max(min(4*n_training, 1200),200))
-density = 1
-n_ensemble = 100
-n_avg = 1
+#=======n related settings====
+n_training = trX.shape[0]/training_split
+n_iter = np.int(max(min(4*n_training, 500),200))
 max_h_num = max(np.int(trX.shape[1]**0.75),3)
-discount_factor = 0.5
-layer = 7
-# if trX.shape[1] <= 20:
-#     layer = 5
-#=======================
+#==============================
 
 #====symbolic definition======
 X = T.fmatrix()
@@ -215,7 +219,7 @@ for i in range(n_avg):
             else:
                 l_r = l_r
             err_old = err
-            #print roc_auc_score(trY, err), np.mean(err), iter
+            print roc_auc_score(trY, err), np.mean(err), iter
         #ensemble_err.append(err)
         ensemble_err[j] = err
         #print err.shape, ensemble_err.shape

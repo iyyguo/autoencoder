@@ -91,13 +91,13 @@ elif dataname == 'vowels':
     learning_rate = 0.02
 elif dataname == 'med_small2':
     trX, trY = outlier_med('med_small',datainit,2)
-    learning_rate = 0.02
+    learning_rate = 0.05
 elif dataname == 'med_small3':
     trX, trY = outlier_med('med_small',datainit,3)
-    learning_rate = 0.02
+    learning_rate = 0.05
 elif dataname == 'med_small4':
     trX, trY = outlier_med('med_small',datainit,4)
-    learning_rate = 0.02
+    learning_rate = 0.05
 #=============================
 
 #===gerneric setting====
