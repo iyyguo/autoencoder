@@ -78,13 +78,14 @@ pp = PdfPages(dataname +'.pdf')
 
 #===gerneric setting====
 density = 1
-n_ensemble = 500
+n_ensemble = 100
 n_avg = 1
 discount_factor = 0.7
 layer = 7
 training_split = 10
 # if trX.shape[1] <= 20:
 #     layer = 5
+err_rec = 1
 #=======================
 
 #=========dataset=============
@@ -136,13 +137,16 @@ elif dataname == 'vowels':
 elif dataname == 'med_small2':
     trX, trY = outlier_med('med_small',datainit,2)
     learning_rate = 0.05
+    err_rec = 0
     #layer = 3
 elif dataname == 'med_small3':
     trX, trY = outlier_med('med_small',datainit,3)
     learning_rate = 0.05
+    err_rec = 0
 elif dataname == 'med_small4':
     trX, trY = outlier_med('med_small',datainit,4)
     learning_rate = 0.05
+    err_rec = 0
 #=============================
 
 #=======n related settings====
@@ -219,7 +223,7 @@ for i in range(n_avg):
             else:
                 l_r = l_r
             err_old = err
-            print roc_auc_score(trY, err), np.mean(err), iter
+            #print roc_auc_score(trY, err), np.mean(err), iter
         #ensemble_err.append(err)
         ensemble_err[j] = err
         #print err.shape, ensemble_err.shape
@@ -237,12 +241,14 @@ for i in range(n_avg):
     avg_auc = avg_auc + roc_auc_score(trY, np.median(ensemble_err, axis = 0))/n_avg
 print avg_auc, 'avg_auc'
 
-with open(dataname+'_err.csv', "w") as output:
-    writer = csv.writer(output, lineterminator='\n')
-    for val in ensemble_err:
-        writer.writerow(val)
-    #writer.writerow([avg_auc])
-    writer.writerow(trY)
+if err_rec == 1:
+    with open(dataname+'_err.csv', "w") as output:
+        writer = csv.writer(output, lineterminator='\n')
+        for val in ensemble_err:
+            writer.writerow(val)
+        #writer.writerow([avg_auc])
+        writer.writerow(trY)
+    
 with open(dataname+'.csv', "w") as output:
     writer = csv.writer(output, lineterminator='\n')
     for val in ensemble_auc:
