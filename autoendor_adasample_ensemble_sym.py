@@ -110,7 +110,8 @@ elif dataname == 'optdigits':
     learning_rate = 0.05
 elif dataname == 'waveform':
     trX, trY = outlier_dataset('waveform',datainit)
-    learning_rate = 0.02
+    learning_rate = 0.002
+    training_split = 20
 elif dataname == 'yeast':
     trX, trY = outlier_dataset('yeast',datainit) #small one
     learning_rate = 0.01
@@ -136,8 +137,9 @@ elif dataname == 'vowels':
     trX, trY = outlier_dataset('vowels',datainit)
     learning_rate = 0.005
     layer = 5
-    pre_train_iter = trX.shape[0]
-    discount_factor = 0.25
+    pre_train_iter = 100
+    training_split = 5
+    #discount_factor = 0.25
 elif dataname == 'med_small2':
     trX, trY = outlier_med('med_small',datainit,2)
     learning_rate = 0.05
@@ -155,7 +157,7 @@ elif dataname == 'med_small4':
 
 #=======n related settings====
 n_training = trX.shape[0]/training_split
-n_iter = np.int(max(min(4*n_training, 1000),200))
+n_iter = 100#np.int(max(min(4*n_training, 1200),200))
 max_h_num = max(np.int(trX.shape[1]**0.75),3)
 ada_point = np.int(n_training**0.75)
 #==============================
@@ -274,5 +276,5 @@ plt.plot(1,avg_auc,'bo')
 #plt.title('Receiver operating characteristic example')
 #plt.legend(loc="lower right")
 plt.savefig(pp, format='pdf')
-#plt.show()
+plt.show()
 pp.close()
