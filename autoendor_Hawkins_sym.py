@@ -107,7 +107,7 @@ density = 1
 n_ensemble = 100
 n_avg = 1
 max_h_num = max(np.int(trX.shape[1]**0.75),3)
-discount_factor = 0.25
+discount_factor = 0.5
 layer = 5
 l_r = learning_rate
 #=======================

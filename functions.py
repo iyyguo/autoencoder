@@ -24,7 +24,7 @@ def generate_masks(shape, density):
     col = np.random.randint(shape[1], size = connections)
     mask[row, col] += 1
     mask = np.double(np.greater(mask,0))
-    #mask = np.ones(shape)
+    mask = np.ones(shape)
     return mask
 
 def rectify(X):

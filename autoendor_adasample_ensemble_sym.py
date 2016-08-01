@@ -80,9 +80,10 @@ pp = PdfPages(dataname +'.pdf')
 density = 1
 n_ensemble = 100
 n_avg = 1
-discount_factor = 0.7
+discount_factor = 0.5
 layer = 7
 training_split = 10
+pre_train_iter = 100
 # if trX.shape[1] <= 20:
 #     layer = 5
 err_rec = 1
@@ -106,7 +107,7 @@ elif dataname == 'musk':
     learning_rate = 0.02
 elif dataname == 'optdigits':
     trX, trY = outlier_dataset('optdigits',datainit)
-    learning_rate = 0.02
+    learning_rate = 0.05
 elif dataname == 'waveform':
     trX, trY = outlier_dataset('waveform',datainit)
     learning_rate = 0.02
@@ -130,10 +131,13 @@ elif dataname == 'seismic':
     learning_rate = 0.02
 elif dataname == 'thyroid':
     trX, trY = outlier_dataset('thyroid',datainit)
-    learning_rate = 0.02
+    learning_rate = 0.01
 elif dataname == 'vowels':
     trX, trY = outlier_dataset('vowels',datainit)
-    learning_rate = 0.02
+    learning_rate = 0.005
+    layer = 5
+    pre_train_iter = trX.shape[0]
+    discount_factor = 0.25
 elif dataname == 'med_small2':
     trX, trY = outlier_med('med_small',datainit,2)
     learning_rate = 0.05
@@ -151,8 +155,9 @@ elif dataname == 'med_small4':
 
 #=======n related settings====
 n_training = trX.shape[0]/training_split
-n_iter = np.int(max(min(4*n_training, 500),200))
+n_iter = np.int(max(min(4*n_training, 1000),200))
 max_h_num = max(np.int(trX.shape[1]**0.75),3)
+ada_point = np.int(n_training**0.75)
 #==============================
 
 #====symbolic definition======
@@ -199,12 +204,12 @@ for i in range(n_avg):
 
         pretrain_index = np.random.choice(len(index), np.int(len(index)/3), replace = False)
         for fn in pre_train_functions:
-            for pre_iter in range(100):
+            for pre_iter in range(pre_train_iter):
                 cost_pre = fn(trX[index[pretrain_index]], l_r)
 
         for iter in range(n_iter):
-            if iter < np.int(len(index)**0.5):
-                ada_size = np.int(len(index)**0.5)
+            if iter < np.int(ada_point):
+                ada_size = np.int(ada_point)
             else:
                 ada_size = min(np.int(ada_size * 1.05), len(index))
             #ada_size = max(np.int(sqrt(len(index))*sqrt(sqrt(len(index)))), iter)
@@ -217,13 +222,13 @@ for i in range(n_avg):
             err = np.sum((predict(trX) - trX)**2, axis = 1)
             if np.mean(err) >= np.mean(err_old):
                 l_r = l_r * 0.95
-                #print 'decrese in learning Rate'
+                print 'decrese in learning Rate'
             elif np.mean(err) < np.mean(err_old) and l_r < learning_rate*1.5:
                 l_r = l_r*1.002
             else:
                 l_r = l_r
             err_old = err
-            #print roc_auc_score(trY, err), np.mean(err), iter
+            print roc_auc_score(trY, err), np.mean(err), iter
         #ensemble_err.append(err)
         ensemble_err[j] = err
         #print err.shape, ensemble_err.shape
@@ -248,7 +253,7 @@ if err_rec == 1:
             writer.writerow(val)
         #writer.writerow([avg_auc])
         writer.writerow(trY)
-    
+
 with open(dataname+'.csv', "w") as output:
     writer = csv.writer(output, lineterminator='\n')
     for val in ensemble_auc:
